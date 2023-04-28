@@ -2,6 +2,7 @@
 import logging
 import datetime
 from PyQt5.QtWidgets import QWidget, QTextEdit
+from PyQt5.QtGui import QKeySequence
 
 class TextLogger(logging.Handler):
     def __init__(self, parent: QWidget = None):

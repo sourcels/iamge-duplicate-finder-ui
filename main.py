@@ -14,6 +14,8 @@ class Main(QMainWindow):
     def __init__(self, parent: QWidget = None) -> None:
         super(Main, self).__init__(parent)
 
+        self.input_files = list()
+
         self.logger = logging.getLogger()
         self.logger.setLevel(logging.DEBUG)
         self.logger.addHandler(TextLogger(self))
@@ -60,6 +62,14 @@ class Main(QMainWindow):
         self.input_hashSize_spinbox.setObjectName("input_hashSize")
         self.main_layout.addWidget(self.input_hashSize_spinbox, 3, 1, Qt.AlignLeft)
 
+        self.nested_folders_checkbox = QCheckBox("Nested Folders", self)
+        self.nested_folders_checkbox.setChecked(True)
+        self.main_layout.addWidget(self.nested_folders_checkbox, 4, 0, 1, 0, Qt.AlignLeft)
+
+        self.ask_move_checkbox = QCheckBox("Ask to move", self)
+        self.ask_move_checkbox.setChecked(True)
+        self.main_layout.addWidget(self.ask_move_checkbox, 5, 0, 1, 0, Qt.AlignLeft)
+
         self.image_label = QLabel()
         self.image_label.setStyleSheet('border: 2px solid black; padding: 2px;')
         self.image_label.setFixedSize(400, 400)
@@ -82,7 +92,7 @@ class Main(QMainWindow):
         self.start_button = QPushButton("Start")
         self.start_button.setObjectName("start_process")
         self.start_button.clicked.connect(self.start_process)
-        self.main_layout.addWidget(self.start_button, 4, 0, Qt.AlignLeft)
+        self.main_layout.addWidget(self.start_button, 6, 0, Qt.AlignLeft)
 
         self.main_layout.setColumnStretch(2, 1)
         self.main_layout.setRowStretch(3, 1)
@@ -101,6 +111,23 @@ class Main(QMainWindow):
 
         self.setMenuBar(menubar)
 
+    def check_type(self, file: str):
+        if file.lower().endswith(".png") or file.lower().endswith(".jpg") or file.lower().endswith(".jpeg") or file.lower().endswith(".bmp"):
+            return True
+        return False
+
+    def parse_files(self):
+        folder_path = os.path.normpath(self.input_folder_label.toolTip())
+        if self.nested_folders_checkbox.isChecked():
+            for root, dirs, files in os.walk(folder_path):
+                for file in files:
+                    if self.check_type(file):
+                        self.input_files.append(os.path.join(root, file))
+        else:
+            for file in os.listdir(folder_path):
+                if self.check_type(file):
+                    self.input_files.append(os.path.join(folder_path, file))
+
     def open_input_folder(self):
         folder_path = QFileDialog.getExistingDirectory(self, "Choose folder to check")
         if folder_path:
@@ -118,10 +145,14 @@ class Main(QMainWindow):
             self.log_label.setText(self.logger.handlers[0].widget.toPlainText())
 
     def start_process(self):
+        self.parse_files()
         try:
-            DuplicateWorker(source_folder_path=self.input_folder_label.toolTip(), duplicate_folder_path=self.output_folder_label.toolTip(), threshold=self.input_threshold_spinbox.value(), hash_size=self.input_hashSize_spinbox.value(), parent=self)
+            worker = DuplicateWorker(self)
+            worker.clean_folder(files = self.input_files, source_folder_path=self.input_folder_label.toolTip(), duplicate_folder_path=os.path.normpath(self.output_folder_label.toolTip()), threshold=self.input_threshold_spinbox.value(), isAsking=self.ask_move_checkbox.isChecked(), hash_size=self.input_hashSize_spinbox.value())
+            duplicate_count, moved_duplicate_count = worker.get_result()
+            QMessageBox.information(self, "Scanning Duplicates Successfully Ended!", f"Successful!\nDuplicates count: {duplicate_count}, Moved duplicates: {moved_duplicate_count}")
         except FileNotFoundError:
-            self.logger.critical("Can't run process! No folders chosen.")
+            self.logger.critical("Can't run process! No folders/files chosen.")
             self.log_label.setText(self.logger.handlers[0].widget.toPlainText())
             QMessageBox.critical(self, "Folder Error", "Please choose directories.")
         except Exception as err:
