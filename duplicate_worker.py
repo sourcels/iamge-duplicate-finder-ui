@@ -109,12 +109,13 @@ class DuplicateWorker:
                                 Path(files[k]).rename(os.path.join(duplicate_folder_path, files[k].split("\\")[-1]))
                             self.parent.logger.info(f"Moved {k} element ({files[k]}) of {list_length}")
                             self.parent.log_label.setText(self.parent.logger.handlers[0].widget.toPlainText())
+                            del files[k]
                             self.moved_duplicate_count += 1
                         else:
                             self.parent.logger.info(f"Ignored {k} element ({files[k]}) of {list_length}")
                             self.parent.log_label.setText(self.parent.logger.handlers[0].widget.toPlainText())
+                            del files[k]
                             k += 1
-                        del files[k]
                     else:
                         k += 1
                     cv2.waitKey(1)
