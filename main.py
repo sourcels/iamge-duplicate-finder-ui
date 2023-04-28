@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import os, sys, shutil, json, cv2, logging
 from pathlib import Path
 from typing import Optional, Dict, List
@@ -119,7 +120,6 @@ class Main(QMainWindow):
     def start_process(self):
         try:
             DuplicateWorker(source_folder_path=self.input_folder_label.toolTip(), duplicate_folder_path=self.output_folder_label.toolTip(), threshold=self.input_threshold_spinbox.value(), hash_size=self.input_hashSize_spinbox.value(), parent=self)
-            self.image_label.setPixmap(QPixmap())
         except FileNotFoundError:
             self.logger.critical("Can't run process! No folders chosen.")
             self.log_label.setText(self.logger.handlers[0].widget.toPlainText())
@@ -128,7 +128,8 @@ class Main(QMainWindow):
             self.logger.critical(err)
             self.log_label.setText(self.logger.handlers[0].widget.toPlainText())
             QMessageBox.critical(self, "Unexpected Error!", f"Details: {err}")
-        self.image_label.setPixmap(QPixmap())
+        finally:
+            self.image_label.setPixmap(QPixmap())
 
     def resizeEvent(self, event):
         size = event.size()
