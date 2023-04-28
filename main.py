@@ -124,10 +124,10 @@ class Main(QMainWindow):
             self.logger.critical("Can't run process! No folders chosen.")
             self.log_label.setText(self.logger.handlers[0].widget.toPlainText())
             QMessageBox.critical(self, "Folder Error", "Please choose directories.")
-        # except Exception as err:
-        #     self.logger.critical(err)
-        #     self.log_label.setText(self.logger.handlers[0].widget.toPlainText())
-        #     QMessageBox.critical(self, "Unexpected Error!", f"Details: {err}")
+        except Exception as err:
+            self.logger.critical(err)
+            self.log_label.setText(self.logger.handlers[0].widget.toPlainText())
+            QMessageBox.critical(self, "Unexpected Error!", f"Details: {err}")
         self.image_label.setPixmap(QPixmap())
 
     def resizeEvent(self, event):
